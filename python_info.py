@@ -9,8 +9,8 @@ TODO(pts): Make it work with MicroPython.
 The output is sorted (so its order is deterministic).
 
 If you run the script multiple times, the following keys are expected to be
-different: 'getpid', 'getpgrp', 'getsid', 'fd.'... (especially the st_ino
-field).
+different: 'getloadavg', 'getpid', 'getpgrp', 'getsid', 'fd.'... (especially
+the st_ino field).
 """
 
 import errno  # pylint: disable=unused-import
