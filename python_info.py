@@ -90,9 +90,33 @@ get_fd_info_ary.append(get_fd_info)'''))
 get_fd_info = get_fd_info_ary.pop()
 
 
+def get_proc_maps():
+  """Linux-specific function to return a list of shared libraries loaded.
+
+  Returns:
+    A sorted list of all memory-mapped files (not only non-shared libraries)
+    in the current process.
+  Rauses:
+    IOError: .
+    OSError: .
+  """
+  f = open('/proc/self/maps')
+  try:
+    data = f.read()
+  finally:
+    f.close()
+  result = set()
+  for line in data.splitlines():
+    i = line.find('  ')
+    if i > 0:
+      entry = line[i:].lstrip(' ')
+      if not (entry.startswith('[') and entry.endswith(']')):
+        result.add(entry)
+  return sorted(result)
+
+
 def get_python_info(wsgi_env=None):
   """Returns an info dict about the active Python environment."""
-  # TODO(pts): Add info from /proc/self/maps.
   d = {}
   populate_or_exc(d, 'getsid', lambda: os.getsid(os.getpid()))
   for k in ('getpid', 'getppid', 'getresuid', 'getresgid', 'getgroups',
@@ -133,6 +157,7 @@ def get_python_info(wsgi_env=None):
   if wsgi_env:
     for n, v in sorted(iteritems(wsgi_env)):
       d['wsgi.%s' % n] = v
+  populate_or_exc(d, 'proc.maps', get_proc_maps)
   return d
 
 
