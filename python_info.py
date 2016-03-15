@@ -92,6 +92,7 @@ get_fd_info = get_fd_info_ary.pop()
 
 def get_python_info():
   """Returns an info dict about the active Python environment."""
+  # TODO(pts): Add info from /proc/self/maps.
   d = {}
   populate_or_exc(d, 'getsid', lambda: os.getsid(os.getpid()))
   for k in ('getpid', 'getppid', 'getresuid', 'getresgid', 'getgroups',
@@ -141,15 +142,33 @@ def format_python_info(d):
   return ''.join(output)
 
 
-def main(argv):  # pylint: disable=unused-argument
-  sys.stdout.write('Content-Type: text/plain\n\n')
+def get_python_info_str():
   d_ary = ['python_info = error\n']
   exec(fix_exc_as(r'''if 1:
   try:
     d_ary[0] = format_python_info(get_python_info())
   except Exception as e:
     d_ary[0] = 'python_info = %r\n' % e'''))
-  sys.stdout.write(d_ary[0])
+  return d_ary[0]
+
+
+def application(env, start_response):
+  """WSGI application entry point. For uWSGI and Gunicorn.
+
+  Usage: uwsgi_python --http-socket :3399 --need-app --module python_info
+  Usage: gunicorn --bind :3399 python_info
+
+  Then visit: http://127.0.0.1:3399/
+  """
+  # TODO(pts): Add info from env.
+  start_response('200 OK', [('Content-Type','text/plain')])
+  return (get_python_info_str(),)
+
+
+def main(argv):  # pylint: disable=unused-argument
+  """Usable from the command-line or as a CGI-script."""
+  sys.stdout.write('Content-Type: text/plain\n\n')
+  sys.stdout.write(get_python_info_str())
   sys.stdout.flush()
 
 
