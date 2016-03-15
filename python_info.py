@@ -144,7 +144,6 @@ def format_python_info(d):
 def main(argv):  # pylint: disable=unused-argument
   sys.stdout.write('Content-Type: text/plain\n\n')
   d_ary = ['python_info = error\n']
-  format_python_info(get_python_info())
   exec(fix_exc_as(r'''if 1:
   try:
     d_ary[0] = format_python_info(get_python_info())
