@@ -90,7 +90,7 @@ get_fd_info_ary.append(get_fd_info)'''))
 get_fd_info = get_fd_info_ary.pop()
 
 
-def get_python_info():
+def get_python_info(wsgi_env=None):
   """Returns an info dict about the active Python environment."""
   # TODO(pts): Add info from /proc/self/maps.
   d = {}
@@ -130,6 +130,9 @@ def get_python_info():
                     lambda v=v: getattr(v, '__file__', None))
   for n, v in sorted(iteritems(os.environ)):
     d['env.%s' % n] = v
+  if wsgi_env:
+    for n, v in sorted(iteritems(wsgi_env)):
+      d['wsgi.%s' % n] = v
   return d
 
 
@@ -142,11 +145,11 @@ def format_python_info(d):
   return ''.join(output)
 
 
-def get_python_info_str():
+def get_python_info_str(wsgi_env=None):
   d_ary = ['python_info = error\n']
   exec(fix_exc_as(r'''if 1:
   try:
-    d_ary[0] = format_python_info(get_python_info())
+    d_ary[0] = format_python_info(get_python_info(wsgi_env))
   except Exception as e:
     d_ary[0] = 'python_info = %r\n' % e'''))
   return d_ary[0]
@@ -160,9 +163,8 @@ def application(env, start_response):
 
   Then visit: http://127.0.0.1:3399/
   """
-  # TODO(pts): Add info from env.
   start_response('200 OK', [('Content-Type','text/plain')])
-  return (get_python_info_str(),)
+  return (get_python_info_str(env),)
 
 
 def main(argv):  # pylint: disable=unused-argument
